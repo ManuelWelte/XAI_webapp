@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Image Gallery</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class = "main_content">   
+            <div class="main-image">
+                <img id="displayed-image" src="images/image1.jpg" alt="Main Image">
+                <img id="displayed-heatmap" src="images/image2.jpg" alt="Main Image">
+                <div class = "chart_container">
+                    <canvas id = "chart"></canvas>
+                </div>
+            </div>
+            
+        </div>
+        <div class="gallery_container">
+            <h2>Images</h2>
+            <div class="thumbnail-gallery">
+                <div class="thumbnail">
+                    <img src="images/image1.jpg" alt="Image 1" onclick="changeImage(this)">
+                </div>
+                <div class="thumbnail">
+                    <img src="images/image2.jpg" alt="Image 2" onclick="changeImage(this)">
+                </div>
+                <div class="thumbnail">
+                    <img src="images/image3.jpg" alt="Image 3" onclick="changeImage(this)">
+                </div>
+                <div class="thumbnail">
+                    <img src="images/image4.jpg" alt="Image 4" onclick="changeImage(this)">
+                </div>
+                <div class="thumbnail">
+                    <img src="images/image5.jpg" alt="Image 5" onclick="changeImage(this)">
+                </div>
+            </div>
+            <button class = button-6>
+                Reload
+            </button>
+    </div>
+    </div>
+    <script src="scripts.js"></script>
+    <script>
+    </script>
+</body>
+</html>
