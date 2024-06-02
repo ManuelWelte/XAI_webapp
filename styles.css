@@ -22,14 +22,15 @@ h1 {
 
 .main_content {
     padding: 20px;
+    margin-left: 150px;
     overflow-y: hidden;
     height: 100vh;
     width: 1000px;
-    background-color: aqua;
+    background-color: rgb(10, 10, 10);
 }
 
 .main-image {       
-    height: 90%;
+    height: 100%;
     overflow-y: scroll;
     align-items: center;
     margin-left: 15%;
@@ -41,6 +42,16 @@ h1 {
     overflow-y: visible;
 }
 
+.chart_container {
+    width: 50%;
+    height : 25%;
+    overflow: hidden;
+}
+
+.main-image canvas {
+    overflow: hidden;
+}
+
 .gallery_container {
     overflow-y: hidden;
     height: 100vh;
@@ -48,7 +59,7 @@ h1 {
     position: fixed;
     bottom: 0;
     right: 0;
-    background-color: #255;
+    background-color: rgb(30,30,30);
 }
 
 .gallery_container h2 {
@@ -60,7 +71,7 @@ h1 {
     display: flex;
     flex-direction: column;
     align-items: center;
-    background-color: #255 ;
+    background-color: rgb(30,30,30);
     overflow-y: scroll; /* Enable vertical scrolling */
     height: 80%;
 }
