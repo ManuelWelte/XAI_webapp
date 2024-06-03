@@ -23,7 +23,7 @@ new Chart(ctx, {
       },
       maintainAspectRatio: false,
       indexAxis: 'y',
-      plugins:{
+      plugins: {
         legend: {
             display: false
         }
