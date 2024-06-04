@@ -1,7 +1,9 @@
 from torch.utils.data import Dataset
 from PIL import image
+
 import os 
 import json
+import torchvision.transforms.functional as VF
 
 class ImageNetSubset(Dataset):
 
@@ -33,13 +35,17 @@ class ImageNetSubset(Dataset):
     
     def __getitem__(self, idx):
         
-        x = Image.open(self.samples[idx]).convert("RGB")
+        x = image.open(self.samples[idx]).convert("RGB")
         
-        if self.transform:
-            x = self.transform(x)
+        x = VF.to_tensor(x)
+        x = VF.normalize(x, *self.mean_std())
 
         return x, self.targets[idx]
-        
+    
+    def mean_std(self):
+        return (0.485, 0.456, 0.406), (0.229, 0.224, 0.225)
+
+
 
 
 
