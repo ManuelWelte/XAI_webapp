@@ -4,36 +4,32 @@ import zennit
 
 class ConceptExplainer:
     
-    def __init__(self, model, mean, std, cuda = False, composite = zennit.composites.EpsilonGammaBox, composite_args = dict(epsilon = 1e-06, gamma = 0.25)):
+    def __init__(self, model, mean, std, composite = zennit.composites.EpsilonGammaBox, composite_args = dict(epsilon = 1e-06, gamma = 0.25)):
         
         self.model = model
-        self.cuda = cuda
         self.composite = composite
         self.composite_args = composite_args
-        self.mean = mean
-        self.std = std
+        self.mean = torch.tensor(mean)
+        self.std = torch.tensor(std)
 
     def box_contraints(self):
         
         lb = (0 - self.mean) / self.std
-        hb = (0 - self.mean) / self.std
-
+        hb = (1 - self.mean) / self.std
+        
         return lb.reshape((1, 3, 1, 1)), hb.reshape((1, 3, 1, 1))
          
     def canonizer(self): 
-
         canons = []
         
-        if isinstance(self.model, torchvision.models.vgg16):
-            canons += [zennit.canonizers.VGGCanonizer()]
+        if isinstance(self.model, torchvision.models.VGG):
+            canons += [zennit.canonizers.SequentialMergeBatchNorm()]
         
         return canons
 
     def explain(self, x, target_logits = "prediction"):
         
-        if self.cuda:
-            x.cuda()
-
+        device = torch.device("cuda:0" if x.get_device() != -1 else "cpu")
         canons = self.canonizer()
         lb, hb = self.box_contraints()
 
@@ -52,13 +48,9 @@ class ConceptExplainer:
         if target_logits == "prediction":
             target_logits = pred
 
-        rel_init = torch.eye(1000)[target_logits]
-        
-        if self.cuda:
-            rel_init = rel_init.cuda() 
-                               
-        out.backward(gradient = rel_init)
+        rel_init = torch.eye(1000)
 
+        out.backward(gradient = rel_init[target_logits.cpu()].to(device))            
         comp.remove()
 
         return out, pred, x.grad        
