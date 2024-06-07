@@ -17,7 +17,7 @@ def get_data_loader(dataset, batch_size = 128, shuffle = False):
 class ImageNetSubset(Dataset):
 
     def __init__(self, root, classes = None):
-        
+
         self.samples = []
         self.targets = []
         self.syn_to_class = {}
@@ -45,7 +45,7 @@ class ImageNetSubset(Dataset):
     def __getitem__(self, idx):
         
         x = Image.open(self.samples[idx]).convert("RGB")
-        # x = VF.resize(x, (224, 224))
+        x = VF.center_crop(x, (224, 224))
         x = VF.to_tensor(x)
         x = VF.normalize(x, *self.mean_std())
 

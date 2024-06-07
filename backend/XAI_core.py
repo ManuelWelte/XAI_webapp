@@ -48,11 +48,12 @@ class ConceptExplainer:
         intm_out = first_pass_info["intermediate_outp"]
 
         x.grad.zero_()
-
+        
         with torch.no_grad():
             mask = ~torch.eye(intm_out.shape[1]).bool()[channel]
             grad_start = intm_grad.clone().detach()
-            grad_start[mask[None,:]] = 0
+            n = grad_start.shape[0]
+            grad_start[mask[None,:].repeat(n, 1)] = 0
         
         intm_out.backward(gradient = grad_start, retain_graph = retain_graph)
         
