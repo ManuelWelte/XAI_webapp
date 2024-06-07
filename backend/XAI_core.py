@@ -47,20 +47,17 @@ class ConceptExplainer:
         intm_grad = first_pass_info["intermediate_grad"]
         intm_out = first_pass_info["intermediate_outp"]
 
-        canons = self.canonizer()
-        lb, hb = self.box_contraints()
-        comp = self.composite(canonizers = canons, low = lb, high = hb, zero_params = "bias", **self.composite_args)
-
         x.grad.zero_()
-        comp.register(self.model)
 
         with torch.no_grad():
             mask = ~torch.eye(intm_out.shape[1]).bool()[channel]
             grad_start = intm_grad.clone().detach()
             grad_start[mask[None,:]] = 0
-    
+        
         intm_out.backward(gradient = grad_start, retain_graph = retain_graph)
-        comp.remove()
+        
+        if not retain_graph:
+            self.active_comp.remove()
 
         return x.grad
 
@@ -70,14 +67,13 @@ class ConceptExplainer:
         canons = self.canonizer()
         lb, hb = self.box_contraints()
 
-        comp = self.composite(canonizers = canons, low = lb, high = hb, zero_params = "bias", **self.composite_args)
-
+        self.active_comp = self.composite(canonizers = canons, low = lb, high = hb, zero_params = "bias", **self.composite_args)
         x.requires_grad = True
         
         if hasattr(x, "grad") and x.grad is not None:
             x.grad.zero_()
 
-        comp.register(self.model)
+        self.active_comp.register(self.model)
         hook = self.register_intermediate_hook(layer)
 
         out = self.model(x)
@@ -99,13 +95,14 @@ class ConceptExplainer:
             if isinstance(layer, torch.nn.Conv2d):
                 with torch.no_grad():
                     intermediate_rel = intermediate_rel.sum(axis = (2,3))
-
+        
             first_pass_info["intermediate_rel"] = intermediate_rel
             first_pass_info["intermediate_grad"] = layer.output.grad.clone().detach()
             first_pass_info["intermediate_outp"] = layer.output
             first_pass_info["input_tensor"] = x
-
-        comp.remove()
+        
+        else:
+            self.active_comp.remove()
 
         return out, x.grad, first_pass_info        
 
