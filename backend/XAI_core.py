@@ -33,12 +33,36 @@ class ConceptExplainer:
         return canons
     
     def register_intermediate_hook(self, layer):
+
         hook = None
 
         if layer is not None:
             hook = layer.register_forward_hook(store_hook)
 
         return hook
+        
+    def explain_channel(self, first_pass_info, channel, retain_graph = False):
+        
+        x = first_pass_info["input_tensor"]
+        intm_grad = first_pass_info["intermediate_grad"]
+        intm_out = first_pass_info["intermediate_outp"]
+
+        canons = self.canonizer()
+        lb, hb = self.box_contraints()
+        comp = self.composite(canonizers = canons, low = lb, high = hb, zero_params = "bias", **self.composite_args)
+
+        x.grad.zero_()
+        comp.register(self.model)
+
+        with torch.no_grad():
+            mask = ~torch.eye(intm_out.shape[1]).bool()[channel]
+            grad_start = intm_grad.clone().detach()
+            grad_start[mask[None,:]] = 0
+    
+        intm_out.backward(gradient = grad_start, retain_graph = retain_graph)
+        comp.remove()
+
+        return x.grad
 
     def explain(self, x, target_logits = "prediction", layer = None):
         
@@ -63,15 +87,25 @@ class ConceptExplainer:
             target_logits = pred
 
         rel_init = torch.eye(1000)
+
+        out.backward(gradient = rel_init[target_logits.cpu()].to(device), retain_graph = hook is not None)            
         
-      
-        out.backward(gradient = rel_init[target_logits.cpu()].to(device))            
+        first_pass_info = {}
 
         if hook is not None:
             hook.remove()
-            intermediate_rel = layer.output.grad 
-        
+            intermediate_rel = layer.output.grad
+
+            if isinstance(layer, torch.nn.Conv2d):
+                with torch.no_grad():
+                    intermediate_rel = intermediate_rel.sum(axis = (2,3))
+
+            first_pass_info["intermediate_rel"] = intermediate_rel
+            first_pass_info["intermediate_grad"] = layer.output.grad.clone().detach()
+            first_pass_info["intermediate_outp"] = layer.output
+            first_pass_info["input_tensor"] = x
+
         comp.remove()
 
-        return out, pred, x.grad        
+        return out, x.grad, first_pass_info        
 
