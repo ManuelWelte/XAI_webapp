@@ -2,9 +2,14 @@ import torchvision
 import torch
 import zennit
 
+# For LRP, the grad of pre-activations z is identical to that of activations a 
+def store_hook(module, inp, outp):
+    module.output = outp
+    module.output.retain_grad()
+
 class ConceptExplainer:
     
-    def __init__(self, model, mean, std, composite = zennit.composites.EpsilonGammaBox, composite_args = dict(epsilon = 1e-06, gamma = 0.25)):
+    def __init__(self, model, mean, std, composite = zennit.composites.EpsilonGammaBox, composite_args = dict(epsilon = 1e-06, gamma = 1000)):
         
         self.model = model
         self.composite = composite
@@ -26,8 +31,16 @@ class ConceptExplainer:
             canons += [zennit.canonizers.SequentialMergeBatchNorm()]
         
         return canons
+    
+    def register_intermediate_hook(self, layer):
+        hook = None
 
-    def explain(self, x, target_logits = "prediction"):
+        if layer is not None:
+            hook = layer.register_forward_hook(store_hook)
+
+        return hook
+
+    def explain(self, x, target_logits = "prediction", layer = None):
         
         device = torch.device("cuda:0" if x.get_device() != -1 else "cpu")
         canons = self.canonizer()
@@ -41,6 +54,7 @@ class ConceptExplainer:
             x.grad.zero_()
 
         comp.register(self.model)
+        hook = self.register_intermediate_hook(layer)
 
         out = self.model(x)
         pred = out.argmax(axis = 1)
@@ -49,8 +63,14 @@ class ConceptExplainer:
             target_logits = pred
 
         rel_init = torch.eye(1000)
-
+        
+      
         out.backward(gradient = rel_init[target_logits.cpu()].to(device))            
+
+        if hook is not None:
+            hook.remove()
+            intermediate_rel = layer.output.grad 
+        
         comp.remove()
 
         return out, pred, x.grad        
