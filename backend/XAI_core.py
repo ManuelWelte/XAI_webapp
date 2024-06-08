@@ -1,6 +1,7 @@
 import torchvision
 import torch
 import zennit
+from tqdm import tqdm
 
 # For LRP, the grad of pre-activations z is identical to that of activations a 
 def store_hook(module, inp, outp):
@@ -41,7 +42,26 @@ class ConceptExplainer:
             hook = layer.register_forward_hook(store_hook)
 
         return hook
+    
+    def store_channel_rels(self, rel, ids, cl):
+
+        for j, id in ids:
+            torch.save()
+
+    def relmax_precompute(self, dataloader, classes, layer):
         
+        for cl in classes:
+            j = 0
+
+            for x, _, ids in tqdm(dataloader):
+                j += 1
+
+                _,_, info = self.explain(x.cuda(), target_logits = torch.tensor([cl] * x.shape[0]).long(), layer = layer)
+                info["intermediate_rel"]
+                
+                if j == 2: break
+                        
+                    
     def explain_channel(self, first_pass_info, channel, retain_graph = False):
         
         x = first_pass_info["input_tensor"]
