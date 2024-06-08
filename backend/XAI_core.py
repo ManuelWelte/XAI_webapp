@@ -9,13 +9,14 @@ def store_hook(module, inp, outp):
 
 class ConceptExplainer:
     
-    def __init__(self, model, mean, std, composite = zennit.composites.EpsilonGammaBox, composite_args = dict(epsilon = 1e-06, gamma = 1000)):
+    def __init__(self, model, mean, std, classes = None, composite = zennit.composites.EpsilonGammaBox, composite_args = dict(epsilon = 1e-06, gamma = 1000)):
         
         self.model = model
         self.composite = composite
         self.composite_args = composite_args
         self.mean = torch.tensor(mean)
         self.std = torch.tensor(std)
+        self.classes = classes
 
     def box_contraints(self):
         

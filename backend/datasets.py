@@ -6,6 +6,8 @@ import json
 import torchvision.transforms.functional as VF
 import torch
 
+REPTILES = range(25, 68)
+
 def get_data_loader(dataset, batch_size = 128, shuffle = False):
 
     loader = torch.utils.data.DataLoader(
@@ -15,11 +17,12 @@ def get_data_loader(dataset, batch_size = 128, shuffle = False):
     return loader
 
 class ImageNetSubset(Dataset):
-
+    
     def __init__(self, root, classes = None):
-
+        
         self.samples = []
         self.targets = []
+        self.sample_ids = []
         self.syn_to_class = {}
         
         with open(os.path.join(root, "imagenet_class_index.json"), "rb") as f:
@@ -38,6 +41,7 @@ class ImageNetSubset(Dataset):
             if classes == None or target in classes:
                 self.targets += [target]
                 self.samples += [os.path.join(samples_dir, filename)]
+                self.sample_ids += [filename]
     
     def __len__(self):
         return len(self.samples)    
@@ -49,7 +53,7 @@ class ImageNetSubset(Dataset):
         x = VF.to_tensor(x)
         x = VF.normalize(x, *self.mean_std())
 
-        return x, self.targets[idx]
+        return x, self.targets[idx], self.sample_ids[idx]
     
     def mean_std(self):
         return (0.485, 0.456, 0.406), (0.229, 0.224, 0.225)
